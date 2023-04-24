@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login Page</title>
+</head>
+<body>
+  <h2>Login</h2>
+  <form method="POST">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username"><br><br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password"><br><br>
+    <input type="submit" value="Submit">
+  </form>
+
+  <script>
+    // Send a GET request to the login page to retrieve the authenticity token
+    fetch("https://learn.nagaed.com/login/canvas")
+      .then(response => response.text())
+      .then(html => {
+        // Parse the HTML response to extract the authenticity token
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        const token = doc.querySelector('input[name="authenticity_token"]').value;
+        console.log(token);
+        // Store the token in a hidden input field on the login page
+        const tokenInput = document.createElement("input");
+        tokenInput.type = "hidden";
+        tokenInput.name = "authenticity_token";
+        tokenInput.value = token;
+        document.querySelector("form").appendChild(tokenInput);
+      })
+      .catch(error => console.error(error));
+
+    // Send a POST request to the server to log in
+    function login(username, password, token) {
+      fetch("https://learn.nagaed.com/login/canvas", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `pseudonym_session[unique_id]=${encodeURIComponent(username)}&pseudonym_session[password]=${encodeURIComponent(password)}&authenticity_token=${encodeURIComponent(token)}`
+      })
+      .then(response => {
+        if (response.ok) {
+          // If the response status is 200 OK, redirect to the target website
+          redirectToLearn();
+        } else {
+          // If the response status is not 200 OK, display an error message
+          alert("Login failed. Please try again.");
+        }
+      })
+      .catch(error => console.error(error));
+    }
+
+    function redirectToLearn() {
+      window.location.href = "https://learn.nagaed.com";
+    }
+
+    document.querySelector('input[type="submit"]').addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // Get the username, password, and authenticity token from the form
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const token = document.querySelector('input[name="authenticity_token"]').value;
+
+      // Log in using the login() function
+      login(username, password, token);
+    });
+  </script>
+</body>
+</html>
